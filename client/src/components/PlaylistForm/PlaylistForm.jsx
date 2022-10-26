@@ -21,7 +21,7 @@ import useYupValidation from '../../hooks/useYupValidation';
 import useSlider from '../../hooks/useSlider';
 import { Spinner } from 'react-spinners-css';
 
-const PlaylistForm = (props) => {
+const PlaylistForm = props => {
   const {
     generatePlaylists,
     playlistUrl,
@@ -52,7 +52,7 @@ const PlaylistForm = (props) => {
   }, []);
 
   // On submit, dispatch form values to Redux store
-  const onSubmit = (data) => {
+  const onSubmit = data => {
     generatePlaylists({ formValues: data, sliderValue });
   };
 
@@ -71,7 +71,7 @@ const PlaylistForm = (props) => {
             {isLoading ? (
               <Spinner color='black' />
             ) : (
-              <button onClick={initialAuthorize}>
+              <button onClick={initialAuthorize} data-testid='auth-button'>
                 I agree, authorize my account
               </button>
             )}
@@ -139,7 +139,7 @@ const PlaylistForm = (props) => {
                   <CustomSlider
                     valueLabelDisplay='auto'
                     min={1950}
-                    max={2021}
+                    max={2022}
                     name='year'
                     value={sliderValue}
                     {...bindSliderValues}
@@ -195,7 +195,7 @@ const PlaylistForm = (props) => {
   );
 };
 
-const mapStateToProps = (state) => {
+const mapStateToProps = state => {
   return {
     authUri: state.authUri,
     success: state.success,
@@ -216,3 +216,5 @@ export default connect(mapStateToProps, {
   retrieveCodeFromURL,
   getToken,
 })(PlaylistForm);
+
+export { PlaylistForm };

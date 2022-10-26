@@ -1,6 +1,5 @@
 import {
   GET_URI,
-  HANDLE_TOKEN,
   GET_USER_INFO,
   CREATE_PLAYLIST,
   RANDOMIZE_QUERY,
@@ -18,7 +17,7 @@ import {
   ACCESS_CODE_SUCCESS,
   START_AUTHORIZATION,
   LOADING_DONE,
-} from '../actions/actions';
+} from '../constants/actiontypes';
 
 const initialState = {
   authUri: '',
@@ -50,8 +49,6 @@ function reducer(state = initialState, action) {
   switch (action.type) {
     case GET_URI:
       return { ...state, authUri: action.payload, authMessage: action.payload };
-    case HANDLE_TOKEN:
-      return { ...state, token: action.payload };
     case GET_USER_INFO:
       return { ...state, userId: action.payload };
     case HANDLE_FORM_VALUES:
