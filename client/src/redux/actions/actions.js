@@ -29,12 +29,14 @@ import {
 export const handleAuthURI = () => dispatch => {
   dispatch({ type: SUCCESS_FINISH });
   return axios.get('http://localhost:2025/authorize').then(res => {
-    localStorage.setItem('validated', true);
+    var today = new Date();
+    console.log(today);
+    localStorage.setItem('validated', today);
     dispatch({ type: GET_URI, payload: res.data });
   });
 };
 
-// Step 2: Redirect User to Authorization URI
+// Step 2: Redirect User to Authorization URIs
 
 export const redirect = () => (dispatch, getState) => {
   let state = getState();
@@ -172,7 +174,20 @@ export const handleSearch = () => (dispatch, getState) => {
       { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
     )
     .then(res => {
-      dispatch({ type: SEARCH_SONGS, payload: res.data.tracks.items });
+      let tracks = res.data.tracks.items;
+      const hashMap = new Map();
+      tracks.forEach(track => {
+        let artistName = track.artists[0].name;
+        let count = hashMap.get(artistName) || 0;
+        hashMap.set(artistName, ++count);
+      });
+      const dict = [...hashMap].filter(([artistName, count]) => count <= 2);
+
+      tracks = tracks.filter(track =>
+        dict.flat().includes(track.artists[0].name)
+      );
+
+      dispatch({ type: SEARCH_SONGS, payload: tracks });
       dispatch({
         type: ALERT_MESSAGE,
         payload: {
@@ -218,8 +233,8 @@ export const addToPlaylist = () => (dispatch, getState) => {
           variant: 'danger',
         },
       });
-      localStorage.removeItem('token');
-      localStorage.removeItem('validated');
+      //localStorage.removeItem('token');
+      //localStorage.removeItem('validated');
     });
 };
 
