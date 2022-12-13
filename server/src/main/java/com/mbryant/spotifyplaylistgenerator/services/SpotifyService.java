@@ -24,7 +24,7 @@ public class SpotifyService
             .makeUri( "http://localhost:3000" + Constants.REDIRECT);
 
 
-    //    Create the spotifyAPI wrapper instance for future use
+    //    Create the spotifyAPI wrapper instance for future usage
     private final SpotifyApi spotifyApi = new SpotifyApi.Builder()
             .setClientId(Constants.CLIENT_ID)
             .setClientSecret(Constants.CLIENT_SECRET)
