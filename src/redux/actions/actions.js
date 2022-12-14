@@ -21,12 +21,13 @@ import {
 
 //https://spotify-playlist-backend2021.herokuapp.com
 //http://localhost:2025
+const backendUrl = 'https://spotify-playlist-backend2021.herokuapp.com';
 
 // Step 1: Begin Authorization
 
 export const handleAuthURI = () => dispatch => {
   dispatch({ type: SUCCESS_FINISH });
-  return axios.get('http://localhost:2025/authorize').then(res => {
+  return axios.get(`${backendUrl}/authorize`).then(res => {
     var today = new Date();
     console.log(today);
     localStorage.setItem('validated', today);
@@ -65,11 +66,9 @@ export const retrieveCodeFromURL = () => dispatch => {
 export const handleToken = () => (dispatch, getState) => {
   let state = getState();
   const code = state.code;
-  return axios
-    .get(`http://localhost:2025/getcredentials?code=${code}`)
-    .then(res => {
-      localStorage.setItem('token', res.data.accessToken);
-    });
+  return axios.get(`${backendUrl}/getcredentials?code=${code}`).then(res => {
+    localStorage.setItem('token', res.data.accessToken);
+  });
 };
 
 // Step 6: Combine Steps 3 and 4 into a single action creator
@@ -82,7 +81,7 @@ export const getToken = () => dispatch => {
 // Step 7: Save User Id in State
 
 export const handleUserInfo = () => dispatch => {
-  return axios.get('http://localhost:2025/me').then(res => {
+  return axios.get(`${backendUrl}/me`).then(res => {
     dispatch({
       type: ALERT_MESSAGE,
       payload: { alertMessage: 'One moment...', variant: 'warning' },
