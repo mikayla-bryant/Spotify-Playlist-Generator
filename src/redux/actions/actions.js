@@ -21,7 +21,7 @@ import {
 
 //https://spotify-playlist-backend2021.herokuapp.com
 //http://localhost:2025
-const backendUrl = 'https://spotify-playlist-backend2021.herokuapp.com';
+const backendUrl = 'https://spotifyplaylistgen.azurewebsites.net/';
 
 // Step 1: Begin Authorization
 
