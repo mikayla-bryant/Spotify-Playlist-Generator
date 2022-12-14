@@ -1,0 +1,23 @@
+{
+  "files": {
+    "main.css": "/spotify-playlist-generator/static/css/main.a4333776.chunk.css",
+    "main.js": "/spotify-playlist-generator/static/js/main.cc106040.chunk.js",
+    "main.js.map": "/spotify-playlist-generator/static/js/main.cc106040.chunk.js.map",
+    "runtime-main.js": "/spotify-playlist-generator/static/js/runtime-main.85db724f.js",
+    "runtime-main.js.map": "/spotify-playlist-generator/static/js/runtime-main.85db724f.js.map",
+    "static/css/2.db623c22.chunk.css": "/spotify-playlist-generator/static/css/2.db623c22.chunk.css",
+    "static/js/2.4d80013c.chunk.js": "/spotify-playlist-generator/static/js/2.4d80013c.chunk.js",
+    "static/js/2.4d80013c.chunk.js.map": "/spotify-playlist-generator/static/js/2.4d80013c.chunk.js.map",
+    "index.html": "/spotify-playlist-generator/index.html",
+    "static/css/2.db623c22.chunk.css.map": "/spotify-playlist-generator/static/css/2.db623c22.chunk.css.map",
+    "static/css/main.a4333776.chunk.css.map": "/spotify-playlist-generator/static/css/main.a4333776.chunk.css.map",
+    "static/js/2.4d80013c.chunk.js.LICENSE.txt": "/spotify-playlist-generator/static/js/2.4d80013c.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.85db724f.js",
+    "static/css/2.db623c22.chunk.css",
+    "static/js/2.4d80013c.chunk.js",
+    "static/css/main.a4333776.chunk.css",
+    "static/js/main.cc106040.chunk.js"
+  ]
+}
