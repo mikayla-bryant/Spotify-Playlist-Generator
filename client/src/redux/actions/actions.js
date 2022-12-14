@@ -4,12 +4,10 @@ import {
   GET_URI,
   GET_USER_INFO,
   CREATE_PLAYLIST,
-  RANDOMIZE_QUERY,
   SEARCH_SONGS,
   GET_TRACK_URIS,
   HANDLE_FORM_VALUES,
   HANDLE_SLIDER_VALUE,
-  RANDOMIZE_OFFSET,
   SUCCESS_ALERT,
   GET_PLAYLIST_URL,
   LOADING_START,
@@ -144,58 +142,84 @@ export const handlePlaylistCreation = () => (dispatch, getState) => {
 
 // Step 11: Retrieve Query Seed
 
-export const randomizeQuery = () => dispatch => {
+const randomizeQuery = () => {
   var result = '';
   result =
     randomCharacters[Math.floor(Math.random() * randomCharacters.length)];
-  return dispatch({ type: RANDOMIZE_QUERY, payload: result });
+  // dispatch({ type: RANDOMIZE_QUERY, payload: result });
+  return result;
 };
 
 // Step 12: Retrieve offset
 
-export const randomizeOffset = () => dispatch => {
+const randomizeOffset = () => {
   var result = '';
-  result = Math.floor(Math.random() * 5 + 1);
-  return dispatch({ type: RANDOMIZE_OFFSET, payload: result });
+  result = Math.floor(Math.random() * 10 + 1);
+  // dispatch({ type: RANDOMIZE_OFFSET, payload: result });
+  return result;
 };
 
 // Step 13: Search for songs
 
 export const handleSearch = () => (dispatch, getState) => {
   let state = getState();
-  const query = state.query;
   const genre = state.genre;
   const finalSliderValue = state.finalSliderValue;
   const numSongs = state.numSongs;
-  const offset = state.offset;
-  return axios
-    .get(
-      `https://api.spotify.com/v1/search?query=${query}*+genre%3A${genre}+year%3A+${finalSliderValue[0]}-${finalSliderValue[1]}&type=track&offset=${offset}&limit=${numSongs}`,
-      { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
-    )
-    .then(res => {
-      let tracks = res.data.tracks.items;
-      const hashMap = new Map();
-      tracks.forEach(track => {
-        let artistName = track.artists[0].name;
-        let count = hashMap.get(artistName) || 0;
-        hashMap.set(artistName, ++count);
-      });
-      const dict = [...hashMap].filter(([artistName, count]) => count <= 2);
+  let query;
+  let offset;
+  let trackLength = 0;
+  let numRetries = 7;
+  let tracks = [];
+  let limitPerRequest;
+  if (numSongs <= 50) {
+    limitPerRequest = numSongs;
+  } else {
+    limitPerRequest = 50;
+  }
+  (async function () {
+    while (trackLength <= numSongs && numRetries > 0) {
+      offset = randomizeOffset();
+      query = randomizeQuery();
+      const response = await axios
+        .get(
+          `https://api.spotify.com/v1/search?query=${query}*+genre%3A${genre}+year%3A+${finalSliderValue[0]}-${finalSliderValue[1]}&type=track&offset=${offset}&limit=${limitPerRequest}`,
+          {
+            headers: {
+              Authorization: 'Bearer ' + localStorage.getItem('token'),
+            },
+          }
+        )
+        .then(res => {
+          tracks = [...tracks, ...res.data.tracks.items];
 
-      tracks = tracks.filter(track =>
-        dict.flat().includes(track.artists[0].name)
-      );
+          const hashMap = new Map();
+          tracks.forEach(track => {
+            let artistName = track.artists[0].name || 'Unknown';
+            let count = hashMap.get(artistName) || 0;
+            hashMap.set(artistName, ++count);
+          });
+          const dict = [...hashMap].filter(([artistName, count]) => count <= 2);
+          tracks = tracks.filter(track =>
+            dict.flat().includes(track.artists[0].name)
+          );
 
-      dispatch({ type: SEARCH_SONGS, payload: tracks });
-      dispatch({
-        type: ALERT_MESSAGE,
-        payload: {
-          alertMessage: 'Retrieving your tunes...',
-          variant: 'warning',
-        },
-      });
+          if (tracks.length > numSongs) {
+            tracks = tracks.splice(0, numSongs);
+          }
+          trackLength = tracks.length;
+        });
+      numRetries = numRetries - 1;
+    }
+    dispatch({ type: SEARCH_SONGS, payload: tracks });
+    dispatch({
+      type: ALERT_MESSAGE,
+      payload: {
+        alertMessage: 'Retrieving your tunes...',
+        variant: 'warning',
+      },
     });
+  })();
 };
 
 // Step 14: Retrieve Track URIs from Search Results
@@ -203,7 +227,8 @@ export const handleSearch = () => (dispatch, getState) => {
 export const handleTrackUris = () => (dispatch, getState) => {
   let state = getState();
   const searchResults = state.searchResults;
-  let uriList = [...new Set(searchResults.map(song => song.uri))];
+  let uriList = [];
+  searchResults.map(song => uriList.push(song.uri));
   return dispatch({ type: GET_TRACK_URIS, payload: uriList });
 };
 
@@ -250,12 +275,6 @@ export const generatePlaylists = data => dispatch => {
     })
     .then(() => {
       return dispatch(handlePlaylistCreation());
-    })
-    .then(() => {
-      return dispatch(randomizeQuery());
-    })
-    .then(() => {
-      return dispatch(randomizeOffset());
     })
     .then(() => {
       return dispatch(handleSearch());

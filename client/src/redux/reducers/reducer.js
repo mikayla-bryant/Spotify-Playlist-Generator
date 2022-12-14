@@ -2,12 +2,10 @@ import {
   GET_URI,
   GET_USER_INFO,
   CREATE_PLAYLIST,
-  RANDOMIZE_QUERY,
   SEARCH_SONGS,
   GET_TRACK_URIS,
   HANDLE_FORM_VALUES,
   HANDLE_SLIDER_VALUE,
-  RANDOMIZE_OFFSET,
   SUCCESS_ALERT,
   GET_PLAYLIST_URL,
   LOADING_START,
@@ -23,7 +21,6 @@ const initialState = {
   authUri: '',
   userId: '',
   playlistId: '',
-  query: '',
   searchResults: [],
   trackUris: [],
   playlistName: '',
@@ -32,7 +29,6 @@ const initialState = {
   genre: '',
   numSongs: '',
   finalSliderValue: [],
-  offset: '',
   snapShotId: '',
   playlistUrl: '',
   alertMessage: '',
@@ -64,10 +60,6 @@ function reducer(state = initialState, action) {
       return { ...state, finalSliderValue: action.payload };
     case CREATE_PLAYLIST:
       return { ...state, playlistId: action.payload };
-    case RANDOMIZE_QUERY:
-      return { ...state, query: action.payload };
-    case RANDOMIZE_OFFSET:
-      return { ...state, offset: action.payload };
     case SEARCH_SONGS:
       return { ...state, searchResults: action.payload };
     case GET_TRACK_URIS:

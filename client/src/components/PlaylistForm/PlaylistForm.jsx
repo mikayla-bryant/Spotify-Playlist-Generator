@@ -97,12 +97,12 @@ const PlaylistForm = props => {
               <Form.Row>
                 <Col xs={5}>
                   <Form.Group>
-                    <Form.Label>NUMBER OF SONGS</Form.Label>
+                    <Form.Label>MAX # OF SONGS</Form.Label>
                     <Form.Control
                       {...register('numSongs', { required: true })}
                       type='number'
                       min={5}
-                      max={50}
+                      max={150}
                       size='lg'
                       autoComplete='off'
                     />
