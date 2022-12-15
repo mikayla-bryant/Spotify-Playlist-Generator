@@ -19,8 +19,8 @@ import {
   LOADING_DONE,
 } from '../constants/actiontypes';
 
-//https://spotify-playlist-backend2021.herokuapp.com
-//http://localhost:2025
+// https://spotifyplaylistgen.azurewebsites.net/
+// http://localhost:2025
 const backendUrl = 'https://spotifyplaylistgen.azurewebsites.net/';
 
 // Step 1: Begin Authorization
@@ -94,6 +94,7 @@ export const handleUserInfo = () => dispatch => {
 // Step 8: Save Form Values in Global Application State
 
 export const handleFormValues = data => dispatch => {
+  dispatch({ type: SUCCESS_FINISH });
   return dispatch({ type: HANDLE_FORM_VALUES, payload: data });
 };
 
@@ -120,23 +121,27 @@ export const handlePlaylistCreation = () => (dispatch, getState) => {
   const playlistName = state.playlistName;
   const description = state.description;
   const privacy = state.privacy;
-  return axios
-    .post(
-      `https://api.spotify.com/v1/users/${userId}/playlists`,
-      {
-        name: playlistName,
-        description: description,
-        public: privacy.toString(),
-      },
-      { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
-    )
-    .then(res => {
-      dispatch({ type: CREATE_PLAYLIST, payload: res.data.id });
-      dispatch({
-        type: GET_PLAYLIST_URL,
-        payload: res.data.external_urls.spotify,
+  if (state.searchResults.length > 0) {
+    return axios
+      .post(
+        `https://api.spotify.com/v1/users/${userId}/playlists`,
+        {
+          name: playlistName,
+          description: description,
+          public: privacy.toString(),
+        },
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') },
+        }
+      )
+      .then(res => {
+        dispatch({ type: CREATE_PLAYLIST, payload: res.data.id });
+        dispatch({
+          type: GET_PLAYLIST_URL,
+          payload: res.data.external_urls.spotify,
+        });
       });
-    });
+  }
 };
 
 // Step 11: Retrieve Query Seed
@@ -168,7 +173,7 @@ export const handleSearch = () => (dispatch, getState) => {
   let query;
   let offset;
   let trackLength = 0;
-  let numRetries = 7;
+  let numRetries = 10;
   let tracks = [];
   let limitPerRequest;
   if (numSongs <= 50) {
@@ -177,7 +182,22 @@ export const handleSearch = () => (dispatch, getState) => {
     limitPerRequest = 50;
   }
   (async function () {
-    while (trackLength <= numSongs && numRetries > 0) {
+    while (trackLength < numSongs) {
+      if (numRetries <= 0) {
+        console.log('error 1');
+        dispatch({
+          type: ALERT_MESSAGE,
+          payload: {
+            alertMessage: `An error has occurred 😥. Please refresh and try again.`,
+            variant: 'danger',
+          },
+        });
+        tracks = [];
+        dispatch({ type: GET_TRACK_URIS, payload: [] });
+        dispatch({ type: SEARCH_SONGS, payload: [] });
+        console.log('breaking');
+        break;
+      }
       offset = randomizeOffset();
       query = randomizeQuery();
       const response = await axios
@@ -210,14 +230,29 @@ export const handleSearch = () => (dispatch, getState) => {
         });
       numRetries = numRetries - 1;
     }
-    dispatch({ type: SEARCH_SONGS, payload: tracks });
-    dispatch({
-      type: ALERT_MESSAGE,
-      payload: {
-        alertMessage: 'Retrieving your tunes...',
-        variant: 'warning',
-      },
-    });
+    if (numRetries <= 0) {
+      console.log('error 2');
+      tracks = [];
+      dispatch({ type: GET_TRACK_URIS, payload: [] });
+      dispatch({ type: SEARCH_SONGS, payload: [] });
+      dispatch({
+        type: ALERT_MESSAGE,
+        payload: {
+          alertMessage: `An error has occurred 😥. Please refresh and try again.`,
+          variant: 'danger',
+        },
+      });
+      return Promise.reject('not enough songs were found');
+    } else {
+      dispatch({ type: SEARCH_SONGS, payload: tracks });
+      dispatch({
+        type: ALERT_MESSAGE,
+        payload: {
+          alertMessage: 'Retrieving your tunes...',
+          variant: 'warning',
+        },
+      });
+    }
   })();
 };
 
@@ -226,9 +261,20 @@ export const handleSearch = () => (dispatch, getState) => {
 export const handleTrackUris = () => (dispatch, getState) => {
   let state = getState();
   const searchResults = state.searchResults;
-  let uriList = [];
-  searchResults.map(song => uriList.push(song.uri));
-  return dispatch({ type: GET_TRACK_URIS, payload: uriList });
+  if (searchResults.length > 0) {
+    let uriList = [];
+    searchResults.map(song => uriList.push(song.uri));
+    return dispatch({ type: GET_TRACK_URIS, payload: uriList });
+  } else {
+    dispatch({
+      type: ALERT_MESSAGE,
+      payload: {
+        alertMessage: `An error has occurred 😥. Please refresh and try again.`,
+        variant: 'danger',
+      },
+    });
+    return Promise.reject('not enough songs were found');
+  }
 };
 
 // Step 15: Add Songs to playlist
@@ -237,51 +283,82 @@ export const addToPlaylist = () => (dispatch, getState) => {
   let state = getState();
   const playlistId = state.playlistId;
   const trackUris = state.trackUris;
-  return axios
-    .post(
-      `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
-      { uris: trackUris },
-      { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }
-    )
-    .then(() => {
-      dispatch({
-        type: LOADING_FINISH,
+  if (trackUris.length > 0) {
+    console.log(trackUris.length);
+    return axios
+      .post(
+        `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+        { uris: trackUris },
+        {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('token') },
+        }
+      )
+      .then(() => {
+        dispatch({
+          type: LOADING_FINISH,
+        });
+        dispatch({ type: SUCCESS_ALERT });
+      })
+      .catch(() => {
+        console.log('error 3');
+        dispatch({
+          type: ALERT_MESSAGE,
+          payload: {
+            alertMessage: `An error has occurred 😥. Please refresh and try again.`,
+            variant: 'danger',
+          },
+        });
+        //localStorage.removeItem('token');
+        //localStorage.removeItem('validated');
       });
-      dispatch({ type: SUCCESS_ALERT });
-    })
-    .catch(() => {
-      dispatch({
-        type: ALERT_MESSAGE,
-        payload: {
-          alertMessage: `An error has occurred 😥. Please refresh and try again.`,
-          variant: 'danger',
-        },
-      });
-      //localStorage.removeItem('token');
-      //localStorage.removeItem('validated');
-    });
+  }
 };
 
 // Step 16: Combine all action creators in sequential order
 
 export const generatePlaylists = data => dispatch => {
-  dispatch(handleUserInfo())
-    .then(() => {
-      return dispatch(handleFormValues(data.formValues));
+  new Promise(function (resolve, reject) {
+    setTimeout(() => resolve(1), 0);
+  })
+    .then(result => {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => resolve(dispatch(handleUserInfo())), 2000);
+      });
+    })
+    .then(result => {
+      return new Promise((resolve, reject) => {
+        setTimeout(
+          () => resolve(dispatch(handleFormValues(data.formValues))),
+          2000
+        );
+      });
+    })
+    .then(result => {
+      return new Promise((resolve, reject) => {
+        setTimeout(
+          () => resolve(dispatch(handleSliderValue(data.sliderValue))),
+          2000
+        );
+      });
     })
     .then(() => {
-      return dispatch(handleSliderValue(data.sliderValue));
+      return new Promise((resolve, reject) => {
+        setTimeout(() => resolve(dispatch(handleSearch())), 2000);
+      });
     })
     .then(() => {
-      return dispatch(handlePlaylistCreation());
+      return new Promise((resolve, reject) => {
+        setTimeout(() => resolve(dispatch(handleTrackUris())), 2000);
+      });
     })
     .then(() => {
-      return dispatch(handleSearch());
+      return new Promise((resolve, reject) => {
+        setTimeout(() => resolve(dispatch(handlePlaylistCreation())), 2000);
+      });
     })
     .then(() => {
-      return dispatch(handleTrackUris());
-    })
-    .then(() => {
-      return dispatch(addToPlaylist());
+      return new Promise((resolve, reject) => {
+        setTimeout(() => resolve(dispatch(addToPlaylist())), 2000);
+      });
     });
 };
